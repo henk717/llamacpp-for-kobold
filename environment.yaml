@@ -16,5 +16,6 @@ dependencies:
   - ninja
   - make
   - packaging
+  - pocl
   - pip:
     - customtkinter
