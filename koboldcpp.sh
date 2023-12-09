@@ -1,6 +1,6 @@
 #!/bin/bash
 if [ ! -f "bin/micromamba" ]; then
-	wget -qO- https://anaconda.org/conda-forge/micromamba/1.5.3/download/linux-64/micromamba-1.5.3-0.tar.bz2 | tar -xvj bin/micromamba
+	curl -Ls https://anaconda.org/conda-forge/micromamba/1.5.3/download/linux-64/micromamba-1.5.3-0.tar.bz2 | tar -xvj bin/micromamba
 fi
 
 if [[ ! -f "conda/envs/linux/bin/python" || $1 == "rebuild" ]]; then
