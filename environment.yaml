@@ -18,6 +18,7 @@ dependencies:
   - make
   - packaging
   - pyinstaller
+  - libcblas
   - ocl-icd-system
   - pip:
     - customtkinter
