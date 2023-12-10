@@ -18,6 +18,6 @@ dependencies:
   - make
   - packaging
   - pyinstaller
-  - pocl
+  - ocl-icd-system
   - pip:
     - customtkinter
