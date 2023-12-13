@@ -1470,7 +1470,7 @@ struct llama_server_context
 
     int split_multiprompt_task(task_server& multiprompt_task)
     {
-        auto prompt_count = multiprompt_task.data.at("prompt").size();
+        int prompt_count = multiprompt_task.data.at("prompt").size();
         assert(prompt_count > 1);
 
         int multitask_id = id_gen++;
@@ -2109,10 +2109,6 @@ static void server_params_parse(int argc, char **argv, server_params &sparams,
             }
             params.yarn_beta_slow = std::stof(argv[i]);
         }
-        else if (arg == "--memory-f32" || arg == "--memory_f32")
-        {
-            params.memory_f16 = false;
-        }
         else if (arg == "--threads" || arg == "-t")
         {
             if (++i >= argc)
@@ -2387,7 +2383,9 @@ json oaicompat_completion_params_parse(
     llama_params["__oaicompat"] = true;
 
     // Map OpenAI parameters to llama.cpp parameters
+    llama_params["model"]             = json_value(body, "model", std::string("uknown"));
     llama_params["prompt"]            = format_chatml(body["messages"]); // OpenAI 'messages' to llama.cpp 'prompt'
+    llama_params["cache_prompt"]      = json_value(body, "cache_prompt", false);
     llama_params["temperature"]       = json_value(body, "temperature", 0.8);
     llama_params["top_k"]             = json_value(body, "top_k", 40);
     llama_params["top_p"]             = json_value(body, "top_p", 0.95);
@@ -2411,9 +2409,7 @@ json oaicompat_completion_params_parse(
     }
 
     // Handle 'stop' field
-    if (body["stop"].is_null()) {
-        llama_params["stop"] = json::array({});
-    } else if (body["stop"].is_string()) {
+    if (body.contains("stop") && body["stop"].is_string()) {
         llama_params["stop"] = json::array({body["stop"].get<std::string>()});
     } else {
         llama_params["stop"] = json_value(body, "stop", json::array());
