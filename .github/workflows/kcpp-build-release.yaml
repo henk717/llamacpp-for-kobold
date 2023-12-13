@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  workflow_dispatch: # allows manual triggering
+    inputs:
+      create_release:
+        description: 'Create new release'
+        required: true
+        type: boolean
+
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+
+  linux:
+    runs-on: ubuntu-16.04
+    steps:
+      - name: Clone
+        id: checkout
+        uses: actions/checkout@v3
+
+      - name: Dependencies
+        id: depends
+        run: |
+          sudo apt-get update
+          sudo apt-get install git curl bzip2
+
+      - name: Build
+        id: make_build
+        run: |
+          ./koboldcpp.sh dist
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: koboldcpp-linux-x64
+          path: ./dist/
