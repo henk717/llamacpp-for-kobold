@@ -1,4 +1,4 @@
-name: CI
+name: Koboldcpp Builder
 
 on:
   release:
