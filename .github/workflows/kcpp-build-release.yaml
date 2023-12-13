@@ -1,15 +1,9 @@
 name: CI
 
 on:
-  workflow_dispatch: # allows manual triggering
-    inputs:
-      create_release:
-        description: 'Create new release'
-        required: true
-        type: boolean
-  push:
-    tags:
-      - v*
+  release:
+    types:
+      - created
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
