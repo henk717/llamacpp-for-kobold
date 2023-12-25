@@ -18,9 +18,7 @@ jobs:
         id: cuda-toolkit
         with:
           cuda: '11.4.4'
-          method: 'local'
-          sub-packages: '["nvcc", "cudart", "cublas", "cublas_dev", "thrust", "visual_studio_integration"]'
-
+        
       - name: Build
         id: cmake_build
         run: |
