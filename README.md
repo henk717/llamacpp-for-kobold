@@ -6,6 +6,7 @@ KoboldCpp is an easy-to-use AI text-generation software for GGML and GGUF models
 ![Preview](media/preview2.png)
 ![Preview](media/preview3.png)
 ![Preview](media/preview4.png)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhenk717%2Fkoboldcpp.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhenk717%2Fkoboldcpp?ref=badge_shield)
 
 ## Windows Usage
 - **[Download the latest .exe release here](https://github.com/LostRuins/koboldcpp/releases/latest)** or clone the git repo.
@@ -107,6 +108,9 @@ You can then run koboldcpp anywhere from the terminal by running `koboldcpp` to 
 - However, Kobold Lite is licensed under the AGPL v3.0 License
 - The other files are also under the AGPL v3.0 License unless otherwise stated
 
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhenk717%2Fkoboldcpp.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhenk717%2Fkoboldcpp?ref=badge_large)
+
 ## Notes
 - Generation delay scales linearly with original prompt length. If OpenBLAS is enabled then prompt ingestion becomes about 2-3x faster. This is automatic on windows, but will require linking on OSX and Linux. CLBlast speeds this up even further, and `--gpulayers` + `--useclblast` or `--usecublas` more so.
 - I have heard of someone claiming a false AV positive report. The exe is a simple pyinstaller bundle that includes the necessary python scripts and dlls to run. If this still concerns you, you might wish to rebuild everything from source code using the makefile, and you can rebuild the exe yourself with pyinstaller by using `make_pyinstaller.bat`
@@ -119,4 +123,3 @@ You can then run koboldcpp anywhere from the terminal by running `koboldcpp` to 
   - GPT-NeoX / Pythia / StableLM / Dolly / RedPajama
   - MPT models
   - Falcon (GGUF only)
-
