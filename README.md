@@ -44,7 +44,7 @@ After running the command above you can use koboldcpp as a terminal command.
 
 *Installing Koboldcpp to the current directory*
 ```
-sudo curl -fLo /usr/bin/koboldcpp https://koboldai.org/cpplinux && sudo chmod +x /usr/bin/koboldcpp
+sudo curl -fLo koboldcpp https://koboldai.org/cpplinux && sudo chmod +x koboldcpp
 ```
 After running this command you can launch Koboldcpp from the current directory using ./koboldcpp
 
