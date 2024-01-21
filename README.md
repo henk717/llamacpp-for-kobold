@@ -57,7 +57,7 @@ Dependencies: curl, bzip2, No automatically launching conda
 ./koboldcpp.sh # This launches the GUI for easy configuration and launching (X11 required).  
 ./koboldcpp.sh --help # List all available terminal commands for using Koboldcpp, you can use koboldcpp.sh the same way as our python script and binaries. 
 ./koboldcpp.sh rebuild # Automatically generates a new conda runtime and compiles a fresh copy of the libraries. Do this after updating Koboldcpp to keep everything functional.
-./koboldcpp.sh dist # Generate your own portable runtime (Due to the nature of Linux compiling these will only work on distributions equal or newer than your own.)
+./koboldcpp.sh dist # Generate your own precompiled binary (Due to the nature of Linux compiling these will only work on distributions equal or newer than your own.)
 ```
 
 ## OSX and Linux Manual Compiling
