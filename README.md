@@ -33,7 +33,7 @@ For more information, be sure to run the program with the `--help` flag, or [che
 ## Linux
 Koboldcpp on Linux is a server running in the background, we advise running it from the terminal so you can easily monitor the performance and easily close Koboldcpp.
 
-### Precompiled Binary  
+### Precompiled Binary (Recommended)
 To use the commands below and for the full functionality of Koboldcpp we expect sudo and curl to be present on the system (sudo is not required for running Koboldcpp, curl is required for the Remote Tunnel feature).
 
 *System-Wide Installation*
@@ -48,7 +48,7 @@ sudo curl -fLo koboldcpp https://koboldai.org/cpplinux && sudo chmod +x koboldcp
 ```
 After running this command you can launch Koboldcpp from the current directory using ./koboldcpp
 
-### Koboldcpp.sh
+### Koboldcpp.sh (Recommended when you can't use the precompiled binary)
 When running from source we recommend using our koboldcpp.sh script on systems that do not have an existing installation of conda. Existing installations of conda are able to hijack our script and cause conflicts, these only work if conda is not set to automatically launch.
 
 Dependencies: curl, bzip2, No automatically launching conda
