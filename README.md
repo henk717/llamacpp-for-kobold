@@ -30,12 +30,40 @@ For more information, be sure to run the program with the `--help` flag, or [che
 - KoboldCpp now has an **official Colab GPU Notebook**! This is an easy way to get started without installing anything in a minute or two. [Try it here!](https://colab.research.google.com/github/LostRuins/koboldcpp/blob/concedo/colab.ipynb).
 - Note that KoboldCpp is not responsible for your usage of this Colab Notebook, you should ensure that your own usage complies with Google Colab's terms of use.
 
-## OSX and Linux
-- For Linux users with a modern system with AVX2 support, you can try the `koboldcpp-linux-x64` PyInstaller prebuilt binary on the **[releases](https://github.com/LostRuins/koboldcpp/releases/latest)** page first.
-- Otherwise, you will have to compile your binaries from source. A makefile is provided, simply run `make`.
+## Linux
+Koboldcpp on Linux is a server running in the background, we advise running it from the terminal so you can easily monitor the performance and easily close Koboldcpp.
+
+### Precompiled Binary  
+To use the commands below and for the full functionality of Koboldcpp we expect sudo and curl to be present on the system (sudo is not required for running Koboldcpp, curl is required for the Remote Tunnel feature).
+
+*System-Wide Installation*
+```
+sudo curl -fLo /usr/bin/koboldcpp https://koboldai.org/cpplinux && sudo chmod +x /usr/bin/koboldcpp  
+```
+After running the command above you can use koboldcpp as a terminal command.
+
+*Installing Koboldcpp to the current directory*
+```
+sudo curl -fLo /usr/bin/koboldcpp https://koboldai.org/cpplinux && sudo chmod +x /usr/bin/koboldcpp
+```
+After running this command you can launch Koboldcpp from the current directory using ./koboldcpp
+
+### Koboldcpp.sh
+When running from source we recommend using our koboldcpp.sh script on systems that do not have an existing installation of conda. Existing installations of conda are able to hijack our script and cause conflicts, these only work if conda is not set to automatically launch.
+
+Dependencies: curl, bzip2, No automatically launching conda
+
+```
+./koboldcpp.sh # This launches the GUI for easy configuration and launching (X11 required).  
+./koboldcpp.sh --help # List all available terminal commands for using Koboldcpp, you can use koboldcpp.sh the same way as our python script and binaries. 
+./koboldcpp.sh rebuild # Automatically generates a new conda runtime and compiles a fresh copy of the libraries. Do this after updating Koboldcpp to keep everything functional.
+./koboldcpp.sh dist # Generate your own portable runtime (Due to the nature of Linux compiling these will only work on distributions equal or newer than your own.)
+```
+
+## OSX and Linux Manual Compiling
+- A makefile is provided, simply run `make`.
 - If you want you can also link your own install of OpenBLAS manually with `make LLAMA_OPENBLAS=1`
-- Arch Linux users can install koboldcpp via the AUR package provided by @AlpinDale. Please see [below](#arch-linux) for more details.
-- Alternatively, if you want you can also link your own install of CLBlast manually with `make LLAMA_CLBLAST=1`, for this you will need to obtain and link OpenCL and CLBlast libraries.
+- If you want you can also link your own install of CLBlast manually with `make LLAMA_CLBLAST=1`, for this you will need to obtain and link OpenCL and CLBlast libraries.
   - For Arch Linux: Install `cblas` `openblas` and `clblast`.
   - For Debian: Install `libclblast-dev` and `libopenblas-dev`.
 - You can attempt a CuBLAS build with `LLAMA_CUBLAS=1`. You will need CUDA Toolkit installed. Some have also reported success with the CMake file, though that is more for windows.
@@ -45,7 +73,7 @@ For more information, be sure to run the program with the `--help` flag, or [che
 - Note: Many OSX users have found that the using Accelerate is actually faster than OpenBLAS. To try, you may wish to run with `--noblas` and compare speeds.
 
 ### Arch Linux Packages
-There are 4 AUR packages available: [CPU-only](https://aur.archlinux.org/packages/koboldcpp-cpu), [CLBlast](https://aur.archlinux.org/packages/koboldcpp-clblast), [CUBLAS](https://aur.archlinux.org/packages/koboldcpp-cuda), and [HIPBLAS](https://aur.archlinux.org/packages/koboldcpp-hipblas). They are, respectively, for users with no GPU, users with a GPU (vendor-agnostic), users with NVIDIA GPUs, and users with a supported AMD GPU.
+There are 4 community made AUR packages available: [CPU-only](https://aur.archlinux.org/packages/koboldcpp-cpu), [CLBlast](https://aur.archlinux.org/packages/koboldcpp-clblast), [CUBLAS](https://aur.archlinux.org/packages/koboldcpp-cuda), and [HIPBLAS](https://aur.archlinux.org/packages/koboldcpp-hipblas). They are, respectively, for users with no GPU, users with a GPU (vendor-agnostic), users with NVIDIA GPUs, and users with a supported AMD GPU.
 
 The recommended installation method is through an AUR helper such as [paru](https://aur.archlinux.org/packages/paru) or [yay](https://aur.archlinux.org/packages/yay):
 
@@ -101,6 +129,7 @@ You can then run koboldcpp anywhere from the terminal by running `koboldcpp` to 
 - Since v1.15, requires CLBlast if enabled, the prebuilt windows binaries are included in this repo. If not found, it will fall back to a mode without CLBlast.
 - Since v1.33, you can set the context size to be above what the model supports officially. It does increases perplexity but should still work well below 4096 even on untuned models. (For GPT-NeoX, GPT-J, and LLAMA models) Customize this with `--ropeconfig`.
 - Since v1.42, supports GGUF models for LLAMA and Falcon
+- Since v1.55, lcuda paths on Linux are hardcoded and may require manual changes to the makefile if you do not use koboldcpp.sh for the compilation.
 - **I plan to keep backwards compatibility with ALL past llama.cpp AND alpaca.cpp models**. But you are also encouraged to reconvert/update your models if possible for best results.
 
 ## License
