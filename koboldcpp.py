@@ -677,7 +677,7 @@ def autoset_gpu_layers(ctxsize,sdquanted,bbs): #shitty algo to determine how man
         if showusedmemwarning and usedmem > (2.5*1024*1024*1024):
             showusedmemwarning = False
             print(f"Note: KoboldCpp has detected that a significant amount of GPU VRAM ({usedmem/1024/1024} MB) is currently used by another application.\nFor best results, you may wish to close that application and then restart KoboldCpp.\n***")
-    reservedmem = max(1.3*1024*1024*1024,(0.5*1024*1024*1024 + usedmem)) # determine vram overhead
+    reservedmem = (0.5*1024*1024*1024 + usedmem) # determine vram overhead
     try:
         if not modelfile_extracted_meta:
             return 0
