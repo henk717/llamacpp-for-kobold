@@ -2,7 +2,7 @@
 #include <cstdint>
 
 const int tensor_split_max = 16;
-const int images_max = 4;
+const int images_max = 8;
 const int logprobs_max = 5;
 
 // match kobold's sampler list and order
@@ -139,6 +139,7 @@ struct last_logprobs_outputs {
     int count = 0;
     logprob_item * logprob_items = nullptr;
 };
+
 struct sd_load_model_inputs
 {
     const char * model_filename = nullptr;
@@ -149,6 +150,7 @@ struct sd_load_model_inputs
     const int threads = 0;
     const int quant = 0;
     const bool taesd = false;
+    const bool notile = false;
     const char * t5xxl_filename = nullptr;
     const char * clipl_filename = nullptr;
     const char * clipg_filename = nullptr;
@@ -177,6 +179,7 @@ struct sd_generation_outputs
     int status = -1;
     const char * data = "";
 };
+
 struct whisper_load_model_inputs
 {
     const char * model_filename = nullptr;
@@ -191,12 +194,40 @@ struct whisper_generation_inputs
     const char * prompt = nullptr;
     const char * audio_data = nullptr;
     const bool suppress_non_speech = false;
+    const char * langcode = nullptr;
     const bool quiet = false;
 };
 struct whisper_generation_outputs
 {
     int status = -1;
     const char * text = "";
+};
+
+struct tts_load_model_inputs
+{
+    const int threads = 4;
+    const char * ttc_model_filename = nullptr;
+    const char * cts_model_filename = nullptr;
+    const char * executable_path = nullptr;
+    const int clblast_info = 0;
+    const int cublas_info = 0;
+    const char * vulkan_info = nullptr;
+    const int gpulayers = 0;
+    const bool flash_attention = false;
+    const int debugmode = 0;
+};
+struct tts_generation_inputs
+{
+    const char * prompt = nullptr;
+    const int speaker_seed = 0;
+    const int audio_seed = 0;
+    const bool quiet = false;
+    const bool nocache = false;
+};
+struct tts_generation_outputs
+{
+    int status = -1;
+    const char * data = "";
 };
 
 extern std::string executable_path;

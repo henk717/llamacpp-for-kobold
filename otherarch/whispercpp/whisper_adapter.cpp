@@ -24,6 +24,7 @@
 #endif
 
 static int whisperdebugmode = 0;
+static bool whisperquiet = false;
 static whisper_context * whisper_ctx = nullptr;
 static std::string whisper_output_text = "";
 
@@ -39,35 +40,6 @@ static bool is_wav_buffer(const std::string buf) {
         return false;
     }
     return true;
-}
-
-static std::vector<float> resample_wav(const std::vector<float>& input, uint32_t input_rate, uint32_t output_rate) {
-
-    size_t input_size = input.size();
-
-    double ratio = static_cast<double>(output_rate) / input_rate;
-    size_t newLength = static_cast<size_t>(input.size() * ratio);
-    std::vector<float> output(newLength);
-
-    if(whisperdebugmode==1)
-    {
-        printf("\nResample wav from %" PRIu32 " to %" PRIu32 " (in size: %zu, out size: %zu)",
-	       input_rate, output_rate, input_size, static_cast<std::size_t>(output.size()));
-    }
-
-    // Perform simple linear interpolation resampling
-    for (size_t i = 0; i < newLength; ++i) {
-        double srcIndex = i / ratio;
-        size_t srcIndexInt = static_cast<size_t>(srcIndex);
-        double frac = srcIndex - srcIndexInt;
-        if (srcIndexInt + 1 < input_size) {
-            output[i] = static_cast<float>(input[srcIndexInt] * (1 - frac) + input[srcIndexInt + 1] * frac);
-        } else {
-            output[i] = input[srcIndexInt];
-        }
-    }
-
-    return output;
 }
 
 static bool read_wav(const std::string & b64data, std::vector<float>& pcmf32, std::vector<std::vector<float>>& pcmf32s, bool stereo)
@@ -86,8 +58,8 @@ static bool read_wav(const std::string & b64data, std::vector<float>& pcmf32, st
         return false;
     }
 
-    if (wav.bitsPerSample != 16) {
-        printf("WAV file must be 16-bit\n");
+    if (wav.bitsPerSample != 8 && wav.bitsPerSample != 16 && wav.bitsPerSample != 32) {
+        printf("WAV file must be 8-bit, 16-bit or 32-bit. Detected: %d\n",wav.bitsPerSample);
         drwav_uninit(&wav);
         return false;
     }
@@ -96,13 +68,29 @@ static bool read_wav(const std::string & b64data, std::vector<float>& pcmf32, st
 
     std::vector<int16_t> pcm16;
     pcm16.resize(n*wav.channels);
-    drwav_read_pcm_frames_s16(&wav, n, pcm16.data());
+
+     if (wav.bitsPerSample == 8) {
+        // Handle 8-bit PCM and convert to 16-bit
+        std::vector<uint8_t> pcm8(n * wav.channels);
+        drwav_read_pcm_frames(&wav, n, pcm8.data());
+        drwav_u8_to_s16(pcm16.data(), pcm8.data(), n * wav.channels);
+    } else if (wav.bitsPerSample == 16) {
+        // Handle 16-bit PCM directly
+        drwav_read_pcm_frames_s16(&wav, n, pcm16.data());
+    } else if (wav.bitsPerSample == 32) {
+        // Handle 32-bit PCM and convert to 16-bit
+        std::vector<int32_t> pcm32(n * wav.channels);
+        drwav_read_pcm_frames_s32(&wav, n, pcm32.data());
+        for (uint64_t i = 0; i < n * wav.channels; ++i) {
+            pcm16[i] = static_cast<int16_t>(pcm32[i] >> 16); // Scale down by shifting
+        }
+    }
     drwav_uninit(&wav);
 
     std::vector<float> raw_pcm;
     raw_pcm.resize(n);
 
-    if(whisperdebugmode==1)
+    if(whisperdebugmode==1 && !whisperquiet)
     {
         printf("\nwav_data_size: %d, n:%d",wav_data.size(),n);
     }
@@ -119,6 +107,11 @@ static bool read_wav(const std::string & b64data, std::vector<float>& pcmf32, st
     }
 
     if (wav.sampleRate != COMMON_SAMPLE_RATE) {
+        if(whisperdebugmode==1 && !whisperquiet)
+        {
+            printf("\nResample wav from %" PRIu32 " to %" PRIu32 " (in size: %zu)",
+            wav.sampleRate, COMMON_SAMPLE_RATE, raw_pcm.size());
+        }
         raw_pcm = resample_wav(raw_pcm, wav.sampleRate, COMMON_SAMPLE_RATE);
     }
 
@@ -210,13 +203,15 @@ whisper_generation_outputs whispertype_generate(const whisper_generation_inputs 
         return output;
     }
 
-    if(!inputs.quiet)
+    whisperquiet = inputs.quiet;
+    if(!whisperquiet)
     {
         printf("\nWhisper Transcribe Generating...");
     }
 
     const std::string b64data = std::string(inputs.audio_data);
     const std::string initprompt = std::string(inputs.prompt);
+    const std::string langcode = std::string(inputs.langcode);
 
     std::vector<float> pcmf32;               // mono-channel F32 PCM
     std::vector<std::vector<float>> pcmf32s; // stereo-channel F32 PCM
@@ -236,7 +231,7 @@ whisper_generation_outputs whispertype_generate(const whisper_generation_inputs 
     wparams.print_timestamps = false;
     wparams.print_special    = false;
     wparams.translate        = false;
-    wparams.language         = "auto";
+    wparams.language         = langcode.c_str();
     wparams.detect_language  = false;
     wparams.n_threads        = 4;
     wparams.n_max_text_ctx   = wparams.n_max_text_ctx;
@@ -248,7 +243,7 @@ whisper_generation_outputs whispertype_generate(const whisper_generation_inputs 
     wparams.split_on_word    = false;
     wparams.audio_ctx        = 0;
     wparams.speed_up         = false;
-    wparams.debug_mode       = false;
+    wparams.debug_mode       = (whisperdebugmode==1);
     wparams.tdrz_enable      = false;
     wparams.suppress_regex   = nullptr;
     wparams.suppress_non_speech_tokens = inputs.suppress_non_speech;
@@ -268,14 +263,14 @@ whisper_generation_outputs whispertype_generate(const whisper_generation_inputs 
         return output;
     }
 
-    if (!inputs.quiet && whisperdebugmode==1) {
+    if (!whisperquiet && whisperdebugmode==1) {
         whisper_print_timings(whisper_ctx);
     }
 
     // output text transcription
     whisper_output_text = output_txt(whisper_ctx, pcmf32s);
     std::string ts = get_timestamp_str();
-    if(!inputs.quiet)
+    if(!whisperquiet)
     {
         printf("\n[%s] Whisper Transcribe Output: %s",ts.c_str(),whisper_output_text.c_str());
     } else {

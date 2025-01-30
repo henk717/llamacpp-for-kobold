@@ -411,7 +411,7 @@
              "info": {
                 "title": "KoboldCpp API",
                 "description": "For swagger.json, <a href=\"?json=1\">click here</a>.",
-                "version": "1.79"
+                "version": "2025.01.08"
              },
              "openapi": "3.0.3",
              "paths": {
@@ -610,12 +610,14 @@
                                "application/json": {
                                   "example": {
                                      "result": "KoboldCpp",
-                                     "version": "1.79",
+                                     "version": "2025.01.08",
                                      "protected": false,
                                      "txt2img": false,
                                      "vision": false,
                                      "transcribe":false,
                                      "multiplayer": false,
+                                     "websearch":false,
+                                     "tts":false,
                                   },
                                   "schema": {
                                      "$ref": "#/components/schemas/KcppVersion"
@@ -1344,6 +1346,8 @@
                             "application/json": {
                                "example": {
                                   "prompt": "",
+                                  "suppress_non_speech" : false,
+                                  "langcode": "en",
                                   "audio_data": "base64_wav_data",
                                },
                                "schema": {
@@ -1351,6 +1355,18 @@
                                      "audio_data": {
                                         "type": "string",
                                         "description": "Base64 respresentation of a 16-bit 16kHz wave file to be transcribed to text."
+                                     },
+                                     "prompt": {
+                                        "type": "string",
+                                        "description": "Prompt to steer the transcription."
+                                     },
+                                     "langcode": {
+                                        "type": "string",
+                                        "description": "Two letter language code, or use auto to autodetect."
+                                     },
+                                     "suppress_non_speech": {
+                                        "type": "boolean",
+                                        "description": "Prevent noise tokens, always generate words for speech."
                                      }
                                   },
                                   "type": "object"
@@ -1427,6 +1443,81 @@
                       "tags": [
                          "api/extra"
                       ]
+                   }
+                },
+                "/api/extra/tts": {
+                   "post": {
+                      "description": "Creates text-to-speech audio from input text.",
+                      "requestBody": {
+                         "content": {
+                            "application/json": {
+                               "example": {
+                                  "input": "hello world, how are you today?",
+                                  "voice": "kobo",
+                               },
+                               "schema": {
+                                  "properties": {
+                                     "input": {
+                                        "type": "string",
+                                        "description": "The text to generate audio for. Try to keep it short."
+                                     },
+                                     "voice": {
+                                        "type": "string",
+                                        "description": "The voice to use when generating the audio. You can enter anything you like, a unique speaker will be generated. There are a few preset voices you can use: kobo,cheery,sleepy,shouty,chatty"
+                                     }
+                                  },
+                                  "type": "object"
+                               }
+                            }
+                         },
+                         "required": true
+                      },
+                      "responses": {
+                         "200": {
+                            "content": {
+                                 "audio/wav": {
+                                    "schema": {
+                                       "type": "string",
+                                       "format": "binary"
+                                    }
+                                 }
+                           },
+                            "description": "Successful request"
+                         }
+                      },
+                      "summary": "Creates text-to-speech audio from input text.",
+                      "tags": [
+                         "api/extra"
+                      ]
+                   }
+                },
+                "/props": {
+                   "get": {
+                      "summary": "Returns the Jinja template stored in the GGUF model, if found.",
+                      "description": "Returns the Jinja template stored in the GGUF model, if found.",
+                      "tags": [
+                         "serviceinfo"
+                      ],
+                      "responses": {
+                         "200": {
+                            "content": {
+                               "application/json": {
+                                  "example": {
+                                    "chat_template": "string",
+                                    "total_slots": 1,
+                                    "default_generation_settings": {
+                                       "n_ctx": 2048,
+                                    },
+                                 },
+                                  "schema": {
+                                    "properties": {},
+                                    "type": "object"
+                                 }
+                               }
+                            },
+                            "description": "Successful request"
+                         }
+                      },
                    }
                 },
                 "/.well-known/serviceinfo": {
@@ -1791,6 +1882,16 @@
                    "post": {
                       "summary": "Transcribes a wav file with speech to text using loaded Whisper model. Please refer to OpenAI documentation",
                       "description": "Transcribes a wav file with speech to text using loaded Whisper model.\n\n This is an OpenAI compatibility endpoint.\n\n Please refer to OpenAI documentation at [https://platform.openai.com/docs/api-reference/audio/createTranscription](https://platform.openai.com/docs/api-reference/audio/createTranscription)",
+                      "tags": [
+                         "v1"
+                      ],
+                      "responses": {"default": {"description": ""}}
+                   }
+                },
+                "/v1/audio/speech": {
+                   "post": {
+                      "summary": "Generates Text-To-Speech audio from input text. Please refer to OpenAI documentation",
+                      "description": "Generates Text-To-Speech audio from input text.\n\n This is an OpenAI compatibility endpoint.\n\n Please refer to OpenAI documentation at [https://platform.openai.com/docs/api-reference/audio/createSpeech](https://platform.openai.com/docs/api-reference/audio/createSpeech)",
                       "tags": [
                          "v1"
                       ],

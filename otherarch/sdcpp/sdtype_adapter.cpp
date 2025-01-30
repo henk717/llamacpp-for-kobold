@@ -112,29 +112,8 @@ static sd_ctx_t * sd_ctx = nullptr;
 static int sddebugmode = 0;
 static std::string recent_data = "";
 
-std::string base64_encode(const unsigned char* data, unsigned int data_length) {
-    const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    std::string encoded;
-    encoded.reserve(((data_length + 2) / 3) * 4);
-    for (unsigned int i = 0; i < data_length; i += 3) {
-        unsigned int triple = (data[i] << 16) + (i + 1 < data_length ? data[i + 1] << 8 : 0) + (i + 2 < data_length ? data[i + 2] : 0);
-        encoded.push_back(base64_chars[(triple >> 18) & 0x3F]);
-        encoded.push_back(base64_chars[(triple >> 12) & 0x3F]);
-        if (i + 1 < data_length) {
-            encoded.push_back(base64_chars[(triple >> 6) & 0x3F]);
-        } else {
-            encoded.push_back('=');
-        }
-        if (i + 2 < data_length) {
-            encoded.push_back(base64_chars[triple & 0x3F]);
-        } else {
-            encoded.push_back('=');
-        }
-    }
-    return encoded;
-}
-
 static std::string sdplatformenv, sddeviceenv, sdvulkandeviceenv;
+static bool notiling = false;
 bool sdtype_load_model(const sd_load_model_inputs inputs) {
 
     executable_path = inputs.executable_path;
@@ -144,6 +123,7 @@ bool sdtype_load_model(const sd_load_model_inputs inputs) {
     std::string t5xxl_filename = inputs.t5xxl_filename;
     std::string clipl_filename = inputs.clipl_filename;
     std::string clipg_filename = inputs.clipg_filename;
+    notiling = inputs.notile;
     printf("\nImageGen Init - Load Model: %s\n",inputs.model_filename);
     if(lorafilename!="")
     {
@@ -352,7 +332,7 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
         sd_params->width = newwidth;
         sd_params->height = newheight;
     }
-    bool dotile = (sd_params->width>768 || sd_params->height>768);
+    bool dotile = (sd_params->width>768 || sd_params->height>768) && !notiling;
     set_sd_vae_tiling(sd_ctx,dotile); //changes vae tiling, prevents memory related crash/oom
 
     //for img2img
@@ -551,7 +531,7 @@ sd_generation_outputs sdtype_generate(const sd_generation_inputs inputs)
         unsigned char * png = stbi_write_png_to_mem(results[i].data, 0, results[i].width, results[i].height, results[i].channel, &out_data_len, "");
         if (png != NULL)
         {
-            recent_data = base64_encode(png,out_data_len);
+            recent_data = kcpp_base64_encode(png,out_data_len);
             free(png);
         }
 
