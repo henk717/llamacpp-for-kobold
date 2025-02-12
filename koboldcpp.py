@@ -4865,6 +4865,8 @@ def downloader_internal(input_url, output_filename, capture_output):
     
     input_url = input_url.split(',')
     for i in input_url:
+        if "https://huggingface.co/" in i and "/blob/main/" in i:
+                i = i.replace("/blob/main/", "/resolve/main/")
         if output_filename == "auto":
             current_filename = os.path.basename(i).split('?')[0]
         else:
