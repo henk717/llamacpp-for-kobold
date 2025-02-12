@@ -11,6 +11,8 @@
 import ctypes
 import multiprocessing
 import os
+import shutil
+import subprocess
 import math
 import re
 import argparse
@@ -4703,33 +4705,17 @@ def setuptunnel(global_memory, has_sd):
             tunnelproc.wait()
 
         if os.name == 'nt':
-            if os.path.exists("cloudflared.exe") and os.path.getsize("cloudflared.exe") > 1000000:
-                print("Cloudflared file exists, reusing it...")
-            else:
-                print("Downloading Cloudflare Tunnel for Windows...")
-                subprocess.run("curl -fL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe -o cloudflared.exe", shell=True, capture_output=True, text=True, check=True, encoding='utf-8')
+            downloader_internal("https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe", "cloudflared.exe", True)
         elif sys.platform=="darwin":
-            if os.path.exists("cloudflared") and os.path.getsize("cloudflared") > 1000000:
-                print("Cloudflared file exists, reusing it...")
-            else:
-                print("Downloading Cloudflare Tunnel for MacOS...")
-                subprocess.run("curl -fL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-amd64.tgz -o cloudflared-darwin-amd64.tgz", shell=True, capture_output=True, text=True, check=True, encoding='utf-8')
-                subprocess.run("tar -xzf cloudflared-darwin-amd64.tgz", shell=True)
-                subprocess.run("chmod +x 'cloudflared'", shell=True)
+            downloader_internal("https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-amd64.tgz", "cloudflared-darwin-amd64.tgz", True)
+            subprocess.run("tar -xzf cloudflared-darwin-amd64.tgz", shell=True)
+            subprocess.run("chmod +x 'cloudflared'", shell=True)
         elif sys.platform == "linux" and platform.machine().lower() == "aarch64":
-            if os.path.exists("cloudflared-linux-arm64") and os.path.getsize("cloudflared-linux-arm64") > 1000000:
-                print("Cloudflared file exists, reusing it...")
-            else:
-                print("Downloading Cloudflare Tunnel for ARM64 Linux...")
-                subprocess.run("curl -fL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64 -o cloudflared-linux-arm64", shell=True, capture_output=True, text=True, check=True, encoding='utf-8')
-                subprocess.run("chmod +x 'cloudflared-linux-arm64'", shell=True)
+            downloader_internal("https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64", "cloudflared-linux-arm64", True)
+            subprocess.run("chmod +x 'cloudflared-linux-arm64'", shell=True)
         else:
-            if os.path.exists("cloudflared-linux-amd64") and os.path.getsize("cloudflared-linux-amd64") > 1000000:
-                print("Cloudflared file exists, reusing it...")
-            else:
-                print("Downloading Cloudflare Tunnel for Linux...")
-                subprocess.run("curl -fL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared-linux-amd64", shell=True, capture_output=True, text=True, check=True, encoding='utf-8')
-                subprocess.run("chmod +x 'cloudflared-linux-amd64'", shell=True)
+            downloader_internal("https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64", "cloudflared-linux-amd64", True)
+            subprocess.run("chmod +x 'cloudflared-linux-amd64'", shell=True)
         print("Attempting to start tunnel thread...", flush=True)
         tunnel_thread = threading.Thread(target=run_tunnel)
         tunnel_thread.start()
@@ -4872,24 +4858,36 @@ def sanitize_string(input_string):
     sanitized_string = re.sub( r'[^\w\d\.\-_]', '', input_string)
     return sanitized_string
 
-def download_model_from_url_internal(url): #returns path to downloaded model when done
+def downloader_internal(input_url, output_filename, capture_output):
+    import shutil
     import subprocess
-    mdlfilename = os.path.basename(url)
-    #check if file already exists
-    if mdlfilename:
-        if os.path.exists(mdlfilename) and os.path.getsize(mdlfilename) > 10000000: #10MB trigger
-            print(f"File {mdlfilename} already exists, not redownloading.")
-            return mdlfilename
+    import os
+    
+    input_url = input_url.split(',')
+    for i in input_url:
+        if output_filename == "auto":
+            current_filename = os.path.basename(i).split('?')[0]
         else:
-            dl_url = url
-            if "https://huggingface.co/" in dl_url and "/blob/main/" in dl_url:
-                dl_url = dl_url.replace("/blob/main/", "/resolve/main/")
-            print(f"Downloading file from external URL at {dl_url} now...")
-            subprocess.run(f"curl -fL {dl_url} -o {mdlfilename}", shell=True, capture_output=True, text=True, check=True, encoding='utf-8')
-            print(f"Download {mdlfilename} completed.", flush=True)
-            return mdlfilename
-    return None
-def download_model_from_url(url,permitted_types=[".gguf",".safetensors"]):
+            current_filename = output_filename
+        if os.path.exists(current_filename) and os.path.getsize(current_filename) > 1000: #1KB trigger
+            print(f"{current_filename} already exists, using existing file.")
+            continue
+        print(f"Downloading {current_filename}", flush=True)
+        if shutil.which("aria2c") is None:
+            if shutil.which("curl") is None:
+                if shutil.which("wget") is None:
+                    print("Could not find suitable download software, please install aria2 or curl.")
+                subprocess.run(f"wget -O {current_filename} {i}", shell=True, capture_output=capture_output, text=True, check=True, encoding='utf-8')
+                return None
+            subprocess.run(f"curl -fLo {current_filename} {i}", shell=True, capture_output=capture_output, text=True, check=True, encoding='utf-8')
+            continue
+        subprocess.run(f"aria2c -x 16 -s 16 --summary-interval=5 --download-result=default --allow-overwrite=true --file-allocation=none -o {current_filename} {i}", shell=True, capture_output=capture_output, text=True, check=True, encoding='utf-8')
+        continue
+    if output_filename == "auto":
+        output_filename = os.path.basename(input_url[0]).split('?')[0]
+    return output_filename
+    
+def download_model_from_url(url,permitted_types=[".gguf",".safetensors", ".ggml", ".bin"]):
     if url and url!="":
         if url.endswith("?download=true"):
             url = url.replace("?download=true","")
@@ -4899,7 +4897,7 @@ def download_model_from_url(url,permitted_types=[".gguf",".safetensors"]):
                 end_ext_ok = True
                 break
         if ((url.startswith("http://") or url.startswith("https://")) and end_ext_ok):
-            dlfile = download_model_from_url_internal(url)
+            dlfile = downloader_internal(url, "auto", False)
             return dlfile
     return None
 
@@ -5154,7 +5152,7 @@ def kcpp_main_process(launch_args, g_memory=None, gui_launcher=False):
 
     # handle model downloads if needed
     if args.model_param and args.model_param!="":
-        dlfile = download_model_from_url(args.model_param,[".gguf",".bin"])
+        dlfile = download_model_from_url(args.model_param,[".gguf",".bin", ".ggml"])
         if dlfile:
             args.model_param = dlfile
     if args.sdmodel and args.sdmodel!="":
