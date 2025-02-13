@@ -4877,8 +4877,9 @@ def downloader_internal(input_url, output_filename, capture_output):
             if shutil.which("curl") is None:
                 if shutil.which("wget") is None:
                     print("Could not find suitable download software, please install aria2 or curl.")
+                    return None
                 subprocess.run(f"wget -O {current_filename} {i}", shell=True, capture_output=capture_output, text=True, check=True, encoding='utf-8')
-                return None
+                continue
             subprocess.run(f"curl -fLo {current_filename} {i}", shell=True, capture_output=capture_output, text=True, check=True, encoding='utf-8')
             continue
         subprocess.run(f"aria2c -x 16 -s 16 --summary-interval=10 --download-result=default --allow-overwrite=true --file-allocation=none -o {current_filename} {i}", shell=True, capture_output=capture_output, text=True, check=True, encoding='utf-8')
